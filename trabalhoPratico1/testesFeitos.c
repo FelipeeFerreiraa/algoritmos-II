@@ -64,3 +64,34 @@ int removerMonteDoJogador(monteDoJogador *m, carta *res)
     else
         return 0;
 }
+
+no *auxBaralhoNoCentro = baralhoNoCentro->inicio;
+while (auxBaralhoNoCentro != NULL)
+{
+    if (cartaRetirada.valor == auxBaralhoNoCentro->cartaDaVez.valor)
+    {
+        // inserir cartaRetirada e auxBaralhoNoCentro->cartaDaVez na area de descarte do jogador[x]
+        amontoando = 1;
+    }
+
+    auxBaralhoNoCentro = auxBaralhoNoCentro->prox;
+}
+amontoando = 0;
+
+for (int y = 0; y < qtdeJogadores; y++)
+{
+    if (cartaRetirada.valor == descarteDeMontes[y]->topo->cartaDaVez.valor)
+    {
+        // inserir cartaRetirada e descarteDeMontes[y]->topo->cartaDaVez na area de descarte do jogador[x
+        amontoando = 1;
+    }
+}
+amontoando = 0;
+
+if (cartaRetirada.valor != 0)
+{
+    // inserir cartaRetirada no baralhoCentro
+    amontoando = 0;
+}
+
+// funcao para verificar quem tem mais cartas no: descarteDeMont
