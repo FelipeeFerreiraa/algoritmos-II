@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include <conio.h>
+#include <windows.h>
 
 #define ANSI_COLOR_RED "\x1b[31m"    // cores em ANSI vermelho
 #define ANSI_COLOR_YELLOW "\033[33m" // cores em ANSI amarelo
@@ -75,12 +76,16 @@ void imprimirBaralhoMesa(baralhoDesviradoMesa *b);
 void imprimirTopoDescarte(areaDeDescarte **a, int qtdeJogadores, jogador *j1);
 
 void colocarCartaAreaDescarteJogador(areaDeDescarte **a, int jogador, carta c);
-void roubarMonte(areaDeDescarte **a, carta c, carta *retirada, int x, int posNoVetorDePonteiros);
+int roubarMonte(areaDeDescarte **a, carta c, int x, int posNoVetorDePonteiros);
 int qtdeCartasMonteDescarte(areaDeDescarte *a);
 
 int verificarSeEhCoringa(carta retirada);
-void vencedorMaisCartas(areaDeDescarte **a, int qtdeJogadores, jogador *j1);
-void bubbleSort(areaDeDescarte **a, int qtdeJogadores);
+int vencedorMaisCartas(areaDeDescarte **a, int qtdeJogadores, jogador *j1);
+
+int verificarAreaDescarte(areaDeDescarte **a, int qtdeJogadores, carta retirada);
+void inserirBaralhoMesaOrdenado(baralhoDesviradoMesa **a, carta c, int x);
+
+baralhoDesviradoMesa **criarMaoFinalJogadores(int qtdeJogadores);
 
 int main()
 {
@@ -92,12 +97,14 @@ int main()
 
     //-----------quantidade de jogadores
     printf("\nQuantos Jogadores vao Jogaaar!\n");
+    setbuf(stdin, NULL);
     scanf("%d", &qtdeJogadores);
     jogador *jogadores = (jogador *)malloc(qtdeJogadores * sizeof(jogador));
     NomearJogadores(jogadores, qtdeJogadores);
 
     //-----------quantidade de baralhos
     printf("\nCom quantos baaralhos vamos jogar? \n");
+    setbuf(stdin, NULL);
     scanf("%d", &qtdeBaralhos);
     int novoTotal = qtdeBaralhos * 54; // no minimo 1 baralho
     carta *baralhoooo = (carta *)malloc(novoTotal * sizeof(carta));
@@ -119,13 +126,16 @@ int main()
     areaDeDescarte **descarteDeMontes = criarAreaDeDescarte(qtdeJogadores);
 
     carta cartaRetirada;
-    no *auxMonteDeCompra = monteDeCompra->topo;
-    int x = 0, teste, teste2, testeCoringa;
+    // no *auxMonteDeCompra = monteDeCompra->topo;
+    int x = 0, teste, teste2, testeCoringa, teste3, monteRoubado;
     int posNoVetorPonteiros;
     int escolha;
 
-    while (monteDeCompra != NULL) // auxMonteDeCompra->topo != NULL
+    // system("cls");
+
+    while (monteDeCompra->topo != NULL) // auxMonteDeCompra->topo != NULL
     {
+        // system("cls");
 
         printf(ANSI_COLOR_RED "\nVez do jogador: %s \n " ANSI_COLOR_NONE, jogadores[x].nome);
 
@@ -145,14 +155,18 @@ int main()
         {
 
             printf("\nEscolha:\n[1] Pegar carta do baralho na mesa\n[2] Roubar o monte de algum jogador\n[3] Colocar carta no meu monte\n[4] Colocar carta no baralho da mesa, virada pra cima!\n");
+            setbuf(stdin, NULL);
             scanf("%d", &escolha);
             carta auxCase2;
+            carta auxCase3;
 
             testeCoringa = 0;
             teste2 = 0;
             teste = 0;
+            teste3 = -1;
 
             switch (escolha)
+
             {
             case 1:
                 printf("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -186,29 +200,46 @@ int main()
                     }
                 }
 
+                // carta aux;
+                //  teste = verificarCartasBaralhoMesa(&cartaRetirada, baralhoNoCentro);
+                //  removerBaralhoDesviradoMesaPOS(baralhoNoCentro, &aux, teste);
+
                 break;
 
             case 2:
 
                 posNoVetorPonteiros = verificarCartasDescarteJogadores(&cartaRetirada, descarteDeMontes, qtdeJogadores);
 
-                roubarMonte(descarteDeMontes, auxCase2, &cartaRetirada, x, posNoVetorPonteiros);
+                printf("TESSTE foraFuncao posNoVetorPonteiros = %d\n", posNoVetorPonteiros);
 
-                // printf("\nCartas no meu monte: %d\n", qtdeCartasMonteDescarte(descarteDeMontes[x]));
+                monteRoubado = roubarMonte(descarteDeMontes, auxCase2, x, posNoVetorPonteiros);
+
+                if (monteRoubado == 0)
+                {
+                    printf("\nroubarMonte aaaaaaaaaaaaaaaaaaaa  retornou 0\n");
+                }
+
+                inserirAreaDeDescarte(descarteDeMontes[x], cartaRetirada);
+
+                printf("tessssssssssstee rouba monte tesssssssste");
                 break;
 
             case 3:
-                // teste = 0;
-                colocarCartaAreaDescarteJogador(descarteDeMontes, x, cartaRetirada);
 
-                // carta teste;
+                colocarCartaAreaDescarteJogador(descarteDeMontes, x, cartaRetirada);
+                removerBaralhoDesviradoMesa(baralhoNoCentro, &auxCase3);
 
                 break;
 
             case 4:
                 testeCoringa = verificarSeEhCoringa(cartaRetirada);
+
                 teste2 = verificarCartasBaralhoMesa(&cartaRetirada, baralhoNoCentro);
+
+                teste3 = verificarAreaDescarte(descarteDeMontes, qtdeJogadores, cartaRetirada);
+
                 inserirBaralhoDesviradoMesa(baralhoNoCentro, cartaRetirada);
+
                 x++;
                 if (x >= qtdeJogadores)
                 {
@@ -221,11 +252,11 @@ int main()
                 break;
             }
 
-        } while (teste2 > 0 || testeCoringa >= 1); // teste == -1 || posNoVetorPonteiros <= -1  ||
+        } while (teste2 > 0 || testeCoringa >= 1 || teste3 >= 0); // teste == -1 || posNoVetorPonteiros <= -1  ||
     }
 
     printf("\nAcabou as cartas!!!1\n");
-    void bubbleSort(areaDeDescarte * *a, int qtdeJogadores);
+
     vencedorMaisCartas(descarteDeMontes, qtdeJogadores, jogadores);
 
     free(baralhoooo);
@@ -251,19 +282,6 @@ baralhoDesviradoMesa *criarBaralhoDesviradoMesa()
     }
     return b1;
 }
-
-/*
-areaDeDescarte **criarAreaDeDescarte(int qtdeJogadores)
-{
-    areaDeDescarte **a1 = (areaDeDescarte **)malloc(qtdeJogadores * sizeof(areaDeDescarte *));
-    for (int x = 0; x < qtdeJogadores; x++)
-    {
-        a1[x] = (areaDeDescarte *)malloc(sizeof(areaDeDescarte));
-        a1[x]->topo = NULL;
-    }
-    return a1;
-}
-*/
 
 areaDeDescarte **criarAreaDeDescarte(int qtdeJogadores)
 {
@@ -521,8 +539,8 @@ void qtdeCartasPilhaCompra(pilhaDeCompra *p)
         int qtd = 0;
         while (aux != NULL)
         {
-            aux = aux->prox;
             qtd++;
+            aux = aux->prox;
         }
         printf("\nqtd: %d \n", qtd);
     }
@@ -568,17 +586,20 @@ int verificarCartasDescarteJogadores(carta *p, areaDeDescarte **a, int qtdeJogad
 {
 
     int posVetorPonteiros;
-
-    for (int x = 0; x < qtdeJogadores; x++)
+    if (a != NULL)
     {
-        if (p->valor == a[x]->topo->cartaDaVez.valor)
+        for (int x = 0; x < qtdeJogadores; x++)
         {
-            posVetorPonteiros = x;
-            return posVetorPonteiros;
+            if (a[x]->topo != NULL && a[x]->topo->cartaDaVez.valor == p->valor)
+            {
+                posVetorPonteiros = x;
+                return posVetorPonteiros;
+            }
         }
     }
 
-    return -1;
+    posVetorPonteiros = -1;
+    return posVetorPonteiros;
 }
 
 void imprimirBaralhoMesa(baralhoDesviradoMesa *b)
@@ -587,10 +608,13 @@ void imprimirBaralhoMesa(baralhoDesviradoMesa *b)
     aux = b->inicio;
 
     printf("\n========== CARTAS NA MESA  ================\n\n");
-    while (aux != NULL)
+    if (aux != NULL)
     {
-        printf("[Valor %d, Naipe: %d ]  ", aux->cartaDaVez.valor, aux->cartaDaVez.naipe);
-        aux = aux->prox;
+        while (aux != NULL)
+        {
+            printf("[Valor %d, Naipe: %d ]  ", aux->cartaDaVez.valor, aux->cartaDaVez.naipe);
+            aux = aux->prox;
+        }
     }
     printf("\n\n========== CARTAS NA MESA ================\n");
 }
@@ -601,12 +625,10 @@ void imprimirTopoDescarte(areaDeDescarte **a, int qtdeJogadores, jogador *j1)
     printf("\n########### TOPO DOS JOGADORES  #############\n\n");
     for (int x = 0; x < qtdeJogadores; x++)
     {
-
         if (a[x]->topo != NULL)
         {
             printf("\n[Topo do %sValor %d, Naipe %d] - qtdTT= %d\n  ", j1[x].nome, a[x]->topo->cartaDaVez.valor, a[x]->topo->cartaDaVez.naipe, qtdeCartasMonteDescarte(a[x]));
         }
-        // printf("Qtd de cartas %d na pilha do jogador %s\n", qtdeCartasMonteDescarte(a[x]), j1[x].nome);
     }
 
     printf("\n########### TOPO DOS JOGADORES  #############\n\n");
@@ -617,19 +639,37 @@ void colocarCartaAreaDescarteJogador(areaDeDescarte **a, int jogador, carta c)
     inserirAreaDeDescarte(a[jogador], c);
 }
 
-void roubarMonte(areaDeDescarte **a, carta c, carta *retirada, int x, int posNoVetorDePonteiros)
+int roubarMonte(areaDeDescarte **a, carta c, int x, int posNoVetorDePonteiros)
 {
+    printf("\ndentro rouba monte\n");
 
-    while (a[posNoVetorDePonteiros]->topo != NULL)
+    if (a[posNoVetorDePonteiros] != NULL)
     {
-        // no *aux = a[posNoVetorDePonteiros]->topo;
+        if (a[posNoVetorDePonteiros]->topo != NULL)
+        {
+            while (a[posNoVetorDePonteiros]->topo != NULL)
+            {
+                //  no *aux = a[posNoVetorDePonteiros]->topo;
 
-        removerAreaDeDescarte(a[posNoVetorDePonteiros], &c);
-        inserirAreaDeDescarte(a[x], c);
-        a[posNoVetorDePonteiros]->topo = a[posNoVetorDePonteiros]->topo->prox;
+                if (removerAreaDeDescarte(a[posNoVetorDePonteiros], &c))
+                {
+                    inserirAreaDeDescarte(a[x], c);
+                    return 1;
+                }
+                else
+                {
+                    printf("\n##ERRO11\n");
+                }
+
+                a[posNoVetorDePonteiros]->topo = a[posNoVetorDePonteiros]->topo->prox; //
+            }
+        }
     }
-
-    inserirAreaDeDescarte(a[x], *retirada);
+    else
+    {
+        printf("Erro: Monte de descarte do jogador %d nao existe!", posNoVetorDePonteiros);
+    }
+    return 0;
 }
 
 int qtdeCartasMonteDescarte(areaDeDescarte *a)
@@ -661,66 +701,102 @@ int verificarSeEhCoringa(carta retirada)
     return testeJoker;
 }
 
-void bubbleSort(areaDeDescarte **a, int qtdeJogadores)
+int vencedorMaisCartas(areaDeDescarte **a, int qtdeJogadores, jogador *j1)
 {
+    printf("TESSTE MAIScARTAS");
 
-    /*
+    // criando a lista de cartas q vou ordenar
+    baralhoDesviradoMesa **cartasJogadores = criarMaoFinalJogadores(qtdeJogadores);
 
-     int x, y;
-    areaDeDescarte **aux;
-
-    int *vetor = (int *)malloc(qtdeJogadores * sizeof(int));
-    for (int w = 0; w < qtdeJogadores; w++)
+    printf("TESSTE MAIScARTAS1");
+    carta carta;
+    for (int i = 0; i < qtdeJogadores; i++)
     {
-        vetor[w] = qtdeCartasMonteDescarte(a[w]);
-
-        for (x = 0; x < vetor[w]; x++)
+        while (a[i] != NULL)
         {
-            for (y = 1; y < vetor[w] - 1; y++)
+            if (removerAreaDeDescarte(a[i], &carta))
             {
-                if (a[y] < a[y - 1])
-                {
-                    aux[y] = a[y];
-                    a[y] = a[y - 1];
-                    a[y - 1] = aux[y];
-                }
+                inserirBaralhoMesaOrdenado(cartasJogadores, carta, i);
+            }
+
+            a[i]->topo = a[i]->topo->prox;
+        }
+    }
+
+    printf("TESSTE MAIScARTAS2");
+
+    for (int i = 0; i < qtdeJogadores; i++)
+    {
+        //  while (cartasJogadores[i] != NULL)
+        // {
+        printf("\nJogador %s:", j1[i].nome);
+        imprimirBaralhoMesa(cartasJogadores[i]);
+        printf("\n\n");
+        // }
+    }
+
+    return 1;
+}
+
+int verificarAreaDescarte(areaDeDescarte **a, int qtdeJogadores, carta retirada)
+{
+    int teste3;
+    if (a != NULL)
+    {
+        for (int x = 0; x < qtdeJogadores; x++)
+        {
+            if (a[x]->topo != NULL && retirada.valor != 14 && retirada.valor == a[x]->topo->cartaDaVez.valor)
+            {
+                teste3 = x;
+                return teste3;
             }
         }
     }
-    */
+
+    teste3 = -1;
+    return teste3;
 }
 
-void vencedorMaisCartas(areaDeDescarte **a, int qtdeJogadores, jogador *j1)
+void inserirBaralhoMesaOrdenado(baralhoDesviradoMesa **a, carta c, int x)
 {
-    int *vetor = (int *)malloc(qtdeJogadores * sizeof(int));
-    for (int x = 0; x < qtdeJogadores; x++)
-    {
-        vetor[x] = qtdeCartasMonteDescarte(a[x]);
-    }
+    no *aux, *novo = (no *)malloc(sizeof(no));
 
-    int maior = vetor[0], empate = 0;
-    int y = 0;
-
-    printf("\n------------------TOTAL DE CARTAS NO FINAL!--------------\n");
-    while (y < qtdeJogadores)
+    if (novo != NULL)
     {
-        if (vetor[y] > maior)
+        novo->cartaDaVez = c;
+        if (a[x]->inicio == NULL)
         {
-            maior = vetor[y];
+            novo->prox = NULL;
+            a[x]->inicio = novo;
         }
-        else if (vetor[y] == maior)
+        else if (novo->cartaDaVez.valor < a[x]->inicio->cartaDaVez.valor)
         {
-            empate = y;
+            novo->prox = a[x]->inicio;
+            a[x]->inicio = novo;
         }
+        else
+        {
+            aux = a[x]->inicio;
+            while (aux->prox != NULL && novo->cartaDaVez.valor > aux->prox->cartaDaVez.valor)
+            {
+                aux = aux->prox;
+            }
 
-        printf("\nJogador %s: %d \n", j1[y].nome, vetor[y]);
-        y++;
+            novo->prox = aux->prox;
+            aux->prox = novo;
+        }
     }
+}
 
-    if (empate > 0)
+baralhoDesviradoMesa **criarMaoFinalJogadores(int qtdeJogadores)
+{
+    // criando a lista de cartas q vou ordenar
+    baralhoDesviradoMesa **cartasJogadores = (baralhoDesviradoMesa **)malloc(qtdeJogadores * sizeof(baralhoDesviradoMesa *));
+    for (int f = 0; f < qtdeJogadores; f++)
     {
-        printf("\nHouve empate!!!\n");
-        printf("\nJogador %s: %d \n", j1[0].nome, vetor[0]);
-        printf("\nJogador %s: %d \n", j1[y].nome, vetor[y]);
+        cartasJogadores[f] = (baralhoDesviradoMesa *)malloc(sizeof(baralhoDesviradoMesa));
+        cartasJogadores[f]->inicio = NULL;
     }
+
+    return cartasJogadores;
 }
